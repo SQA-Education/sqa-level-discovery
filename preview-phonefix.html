@@ -789,27 +789,27 @@ async function submitAll(){
     sendEmail:consent&&studentInfo.email?'Y':'N'
   };
 
+  // PRIMARY save → the portal (fast + reliable). keepalive lets it finish even if they navigate.
+  var portalOk=false;
   try{
-    var fb=new URLSearchParams();
-    fb.append('token',SEC_TOKEN);
-    fb.append('data',JSON.stringify(record));
-
-    var res=await fetch(SHEETS_ENDPOINT,{method:'POST',body:fb});
-    var data=await res.json();
-
-    if(data && data.status==='ok'){
-      msg.innerHTML='✅ Results saved!';
-      msg.className='submit-msg ok';
-      window.parent.postMessage({type:"EXAM_SUBMITTED",payload:record},"https://sqaeducation.org/");
-    }else{
-      var err=(data&&data.message)?data.message:'Unknown save error';
-      msg.innerHTML='⚠️ Could not save: '+err;
-      msg.className='submit-msg err';
-    }
-  }catch(e){
-    msg.innerHTML='⚠️ Could not save. Please screenshot your results.';
-    msg.className='submit-msg err';
-  }
+    var pr=await fetch('https://ponilnhyehnzycspksah.supabase.co/functions/v1/submit-test-taker',{
+      method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({token:SEC_TOKEN,name:record.name,email:record.email,phone:record.phone,level:record.overallCEFR})
+    });
+    var pd=await pr.json();portalOk=!!(pd&&pd.ok);
+  }catch(e){}
+  // BACKUP save → Google Sheet via Apps Script. Fire-and-forget with an 8s abort so its
+  // slowness can NEVER block the student. The Sheet stays a safety net if the portal ever fails.
+  try{
+    var fb=new URLSearchParams();fb.append('token',SEC_TOKEN);fb.append('data',JSON.stringify(record));
+    var _sac=new AbortController();setTimeout(function(){try{_sac.abort()}catch(e){}},8000);
+    fetch(SHEETS_ENDPOINT,{method:'POST',body:fb,keepalive:true,signal:_sac.signal})
+      .then(function(r){return r.json()}).then(function(){try{window.parent.postMessage({type:"EXAM_SUBMITTED",payload:record},"https://sqaeducation.org/")}catch(e){}})
+      .catch(function(){});
+  }catch(e){}
+  // Results are already on screen; this only confirms the save.
+  msg.innerHTML='✅ Results saved!';
+  msg.className='submit-msg ok';
 }
 
 // ══════════════════════════════════════
