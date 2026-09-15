@@ -827,11 +827,12 @@ S('#btn-go-choice').addEventListener('click',function(){
   // Check if email already exists in Google Sheets
   if(SHEETS_ENDPOINT){
     S('#btn-go-choice').disabled=true;S('#btn-go-choice').textContent='Checking...';
-    fetch(SHEETS_ENDPOINT+'?check='+encodeURIComponent(em)+'&token='+encodeURIComponent(SEC_TOKEN)).then(function(r){return r.json()}).then(function(d){
-      S('#btn-go-choice').disabled=false;S('#btn-go-choice').textContent='Continue →';
+    var _ac=new AbortController();var _done=false;var _proceed=function(){if(_done)return;_done=true;S('#btn-go-choice').disabled=false;S('#btn-go-choice').textContent='Continue →';try{localStorage.setItem('sqa-test-email',em)}catch(x){}go('scr-choice')};var _to=setTimeout(function(){try{_ac.abort()}catch(e){}_proceed()},4000);
+    fetch(SHEETS_ENDPOINT+'?check='+encodeURIComponent(em)+'&token='+encodeURIComponent(SEC_TOKEN),{signal:_ac.signal}).then(function(r){return r.json()}).then(function(d){
+      if(_done)return;_done=true;clearTimeout(_to);S('#btn-go-choice').disabled=false;S('#btn-go-choice').textContent='Continue →';
       if(d&&d.exists){S('#already-detail').textContent='The email '+em+' was used on '+d.date+'.';go('scr-already')}
       else{try{localStorage.setItem('sqa-test-email',em)}catch(x){}go('scr-choice')}
-    }).catch(function(){S('#btn-go-choice').disabled=false;S('#btn-go-choice').textContent='Continue →';go('scr-choice')});
+    }).catch(function(){clearTimeout(_to);_proceed()});
   } else {go('scr-choice')}
 });
 S('#pick-written').addEventListener('click',function(){testOrder='written';go('scr-written');wRender()});
