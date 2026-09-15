@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SQA English Level Discovery</title>
   <link href="./SQA English Level Discovery_files/css2" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css">
+  <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js"></script>
   <style>
     :root{--dark:#2c2c54;--dark-light:#474787;--purple:#5B5091;--purple-light:#7B6DB5;--gold:#F5A623;--gold-dark:#E67E22;--bg:#1a1a3e;--card:#fff;--text:#333;--text-light:#888;--text-white:#fff;--text-muted:rgba(255,255,255,.7);--success:#27ae60;--error:#e74c3c;--font:'Poppins',-apple-system,sans-serif;--radius:16px;--radius-sm:12px;--shadow:0 10px 30px rgba(0,0,0,.15)}
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -289,12 +291,8 @@ document.addEventListener('selectstart', function(e) {
         <div class="form-group"><label>Full Name <span class="req">*</span></label><input type="text" id="f-name" placeholder="e.g. Maria Rodriguez"></div>
         <div class="form-group"><label>Email Address <span class="req">*</span></label><input type="email" id="f-email" placeholder="e.g. maria@email.com"><span id="err-email" class="field-err hidden">Please enter a valid email address.</span></div>
         <div class="form-group"><label>Phone Number <span class="req">*</span></label>
-          <div class="phone-row">
-            <div><span class="phone-sub">Country</span><select id="f-cc"><option value="+1">🇺🇸 +1</option><option value="+55">🇧🇷 +55</option><option value="+52">🇲🇽 +52</option><option value="+57">🇨🇴 +57</option><option value="+51">🇵🇪 +51</option><option value="+56">🇨🇱 +56</option><option value="+54">🇦🇷 +54</option><option value="+58">🇻🇪 +58</option><option value="+593">🇪🇨 +593</option><option value="+502">🇬🇹 +502</option><option value="+503">🇸🇻 +503</option><option value="+504">🇭🇳 +504</option><option value="+44">🇬🇧 +44</option><option value="+33">🇫🇷 +33</option><option value="+49">🇩🇪 +49</option><option value="+39">🇮🇹 +39</option><option value="+34">🇪🇸 +34</option><option value="+351">🇵🇹 +351</option><option value="+86">🇨🇳 +86</option><option value="+91">🇮🇳 +91</option><option value="+81">🇯🇵 +81</option><option value="+82">🇰🇷 +82</option><option value="+966">🇸🇦 +966</option><option value="+971">🇦🇪 +971</option><option value="+20">🇪🇬 +20</option><option value="+234">🇳🇬 +234</option><option value="+254">🇰🇪 +254</option><option value="+63">🇵🇭 +63</option><option value="+84">🇻🇳 +84</option><option value="+380">🇺🇦 +380</option><option value="+7">🇷🇺 +7</option></select></div>
-            <div><span class="phone-sub">Area Code</span><input type="tel" id="f-area" placeholder="305" maxlength="5"></div>
-            <div><span class="phone-sub">Number</span><input type="tel" id="f-phone" placeholder="555-1234" maxlength="12"></div>
-          </div>
-          <span id="err-phone" class="field-err hidden">Please enter your area code and phone number.</span>
+          <input type="tel" id="f-phone-intl" placeholder="Phone number" style="width:100%;padding:11px 12px;font-family:var(--font);font-size:.95rem;border:2px solid #e5e5e5;border-radius:var(--radius-sm);background:#f8f9fa;color:var(--text)">
+          <span id="err-phone" class="field-err hidden">Please enter a valid phone number and choose your country.</span>
         </div>
         <div class="form-group"><label>Country of Origin</label><input type="text" id="f-country" placeholder="e.g. Brazil"></div>
         <div class="form-group"><label>Where did you hear about us?</label><select id="f-referral"><option value="">— Select —</option><option value="Instagram">Instagram</option><option value="Facebook">Facebook</option><option value="Friend/Family">Friend/Family</option><option value="Alliance Services">Alliance Services</option><option value="Other">Other</option></select></div>
@@ -402,7 +400,7 @@ document.addEventListener('selectstart', function(e) {
 'use strict';
 var SHEETS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxfVP9KPWSyKKuprnpWQ0SWHogHAFOlm6MDxrtdRUt3A__KOw_ZAs4vUYwU6MPdq96nZg/exec';
 //var SHEETS_ENDPOINT = 'https://sqaeducation.org/wp-json/sqa/v1/save-exam/';
-var ORAL_PROXY = 'https://script.google.com/macros/s/AKfycbw-BNRxesvKZNPW53iqnoc_Z7elS3QUlsv2Wuvg1krhuJVIWseI9d0pa_0gDns90TsYTw/exec';
+var ORAL_PROXY = 'https://ponilnhyehnzycspksah.supabase.co/functions/v1/oral-interview';
 var SEC_TOKEN = 'sqa-placement-2026-secure-94kL2';
 var MAX_ORAL_Q = 12;
 var S = function(id){return document.querySelector(id)};
@@ -791,27 +789,27 @@ async function submitAll(){
     sendEmail:consent&&studentInfo.email?'Y':'N'
   };
 
+  // PRIMARY save → the portal (fast + reliable). keepalive lets it finish even if they navigate.
+  var portalOk=false;
   try{
-    var fb=new URLSearchParams();
-    fb.append('token',SEC_TOKEN);
-    fb.append('data',JSON.stringify(record));
-
-    var res=await fetch(SHEETS_ENDPOINT,{method:'POST',body:fb});
-    var data=await res.json();
-
-    if(data && data.status==='ok'){
-      msg.innerHTML='✅ Results saved!';
-      msg.className='submit-msg ok';
-      window.parent.postMessage({type:"EXAM_SUBMITTED",payload:record},"https://sqaeducation.org/");
-    }else{
-      var err=(data&&data.message)?data.message:'Unknown save error';
-      msg.innerHTML='⚠️ Could not save: '+err;
-      msg.className='submit-msg err';
-    }
-  }catch(e){
-    msg.innerHTML='⚠️ Could not save. Please screenshot your results.';
-    msg.className='submit-msg err';
-  }
+    var pr=await fetch('https://ponilnhyehnzycspksah.supabase.co/functions/v1/submit-test-taker',{
+      method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({token:SEC_TOKEN,name:record.name,email:record.email,phone:record.phone,level:record.overallCEFR})
+    });
+    var pd=await pr.json();portalOk=!!(pd&&pd.ok);
+  }catch(e){}
+  // BACKUP save → Google Sheet via Apps Script. Fire-and-forget with an 8s abort so its
+  // slowness can NEVER block the student. The Sheet stays a safety net if the portal ever fails.
+  try{
+    var fb=new URLSearchParams();fb.append('token',SEC_TOKEN);fb.append('data',JSON.stringify(record));
+    var _sac=new AbortController();setTimeout(function(){try{_sac.abort()}catch(e){}},8000);
+    fetch(SHEETS_ENDPOINT,{method:'POST',body:fb,keepalive:true,signal:_sac.signal})
+      .then(function(r){return r.json()}).then(function(){try{window.parent.postMessage({type:"EXAM_SUBMITTED",payload:record},"https://sqaeducation.org/")}catch(e){}})
+      .catch(function(){});
+  }catch(e){}
+  // Results are already on screen; this only confirms the save.
+  msg.innerHTML='✅ Results saved!';
+  msg.className='submit-msg ok';
 }
 
 // ══════════════════════════════════════
@@ -821,19 +819,20 @@ S('#btn-go-info').addEventListener('click',function(){if(!S('#chk-consent').chec
 S('#f-email').addEventListener('blur',function(){var v=S('#f-email').value.trim();if(v&&!validEmail(v))S('#err-email').classList.remove('hidden');else S('#err-email').classList.add('hidden')});
 S('#btn-go-choice').addEventListener('click',function(){
   S('#err-email').classList.add('hidden');S('#err-phone').classList.add('hidden');
-  var nm=S('#f-name').value.trim(),em=S('#f-email').value.trim(),cc=S('#f-cc').value,ac=S('#f-area').value.trim(),pn=S('#f-phone').value.trim();
+  var nm=S('#f-name').value.trim(),em=S('#f-email').value.trim(),ph=phoneIntlValue();
   if(!nm){alert('Please enter your name.');return}
   if(!em||!validEmail(em)){S('#err-email').classList.remove('hidden');S('#f-email').focus();return}
-  if(!ac||!pn){S('#err-phone').classList.remove('hidden');return}
-  studentInfo={name:nm,email:em,phone:cc+' ('+ac+') '+pn,country:S('#f-country').value.trim(),referral:S('#f-referral').value};
+  if(!phoneIntlValid()){S('#err-phone').classList.remove('hidden');return}
+  studentInfo={name:nm,email:em,phone:ph,country:S('#f-country').value.trim(),referral:S('#f-referral').value};
   // Check if email already exists in Google Sheets
   if(SHEETS_ENDPOINT){
     S('#btn-go-choice').disabled=true;S('#btn-go-choice').textContent='Checking...';
-    fetch(SHEETS_ENDPOINT+'?check='+encodeURIComponent(em)+'&token='+encodeURIComponent(SEC_TOKEN)).then(function(r){return r.json()}).then(function(d){
-      S('#btn-go-choice').disabled=false;S('#btn-go-choice').textContent='Continue →';
+    var _ac=new AbortController();var _done=false;var _proceed=function(){if(_done)return;_done=true;S('#btn-go-choice').disabled=false;S('#btn-go-choice').textContent='Continue →';try{localStorage.setItem('sqa-test-email',em)}catch(x){}go('scr-choice')};var _to=setTimeout(function(){try{_ac.abort()}catch(e){}_proceed()},4000);
+    fetch(SHEETS_ENDPOINT+'?check='+encodeURIComponent(em)+'&token='+encodeURIComponent(SEC_TOKEN),{signal:_ac.signal}).then(function(r){return r.json()}).then(function(d){
+      if(_done)return;_done=true;clearTimeout(_to);S('#btn-go-choice').disabled=false;S('#btn-go-choice').textContent='Continue →';
       if(d&&d.exists){S('#already-detail').textContent='The email '+em+' was used on '+d.date+'.';go('scr-already')}
       else{try{localStorage.setItem('sqa-test-email',em)}catch(x){}go('scr-choice')}
-    }).catch(function(){S('#btn-go-choice').disabled=false;S('#btn-go-choice').textContent='Continue →';go('scr-choice')});
+    }).catch(function(){clearTimeout(_to);_proceed()});
   } else {go('scr-choice')}
 });
 S('#pick-written').addEventListener('click',function(){testOrder='written';go('scr-written');wRender()});
@@ -847,7 +846,7 @@ S('#text-input').addEventListener('input',function(){S('#send-btn').disabled=!S(
 S('#text-input').addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();oSend(S('#text-input').value)}});
 S('#btn-transcript').addEventListener('click',function(){var tc=S('#r-transcript');var open=tc.classList.toggle('open');this.textContent=open?'📝 Hide Transcript ▴':'📝 View Conversation Transcript ▾'});
 S('#btn-retake-all').addEventListener('click',function(){writtenResult=null;oralResult=null;wIdx=0;wSel=null;wAnswers=[];oTranscript=[];oHistory=[];oQCount=0;oProcessing=false;S('#chat-area').innerHTML='';go('scr-welcome')});
-S('#btn-choose-class').addEventListener('click',function(){var level='';var els=['#overall-cefr','#result-cefr','.level-txt','#w-result-cefr','#o-result-cefr'];for(var i=0;i<els.length;i++){var el=document.querySelector(els[i]);if(el&&el.textContent){var m=el.textContent.match(/(Pre-?A1|A1|A2|B1|B2|C1)/i);if(m){level=m[1].toUpperCase().replace('-','');break}}}if(!level&&typeof writtenResult!=='undefined'&&writtenResult&&writtenResult.cefr)level=writtenResult.cefr;if(!level&&typeof oralResult!=='undefined'&&oralResult&&oralResult.cefr)level=oralResult.cefr;if(!level)level='A1';if(level==='PREA1'||level==='PRE-A1'||level==='Pre-A1'){alert('Your level is Pre-A1. Our current classes start at A1 level. Please contact us at info@sqaeducation.org and we will help you find the right program for you!');return}var name='',email='',phoneCC='',phoneArea='',phoneNum='';try{var nm=S('#f-name'),em=S('#f-email'),cc=S('#f-cc'),ac=S('#f-area'),ph=S('#f-phone');if(nm)name=nm.value.trim();if(em)email=em.value.trim();if(cc)phoneCC=cc.value;if(ac)phoneArea=ac.value.trim();if(ph)phoneNum=ph.value.trim()}catch(x){}var p=[];p.push('level='+encodeURIComponent(level));if(name)p.push('name='+encodeURIComponent(name));if(email)p.push('email='+encodeURIComponent(email));if(phoneCC)p.push('phoneCC='+encodeURIComponent(phoneCC));if(phoneArea)p.push('phoneArea='+encodeURIComponent(phoneArea));if(phoneNum)p.push('phoneNum='+encodeURIComponent(phoneNum));window.location.href='https://sqa-education.github.io/sqa-class-enrollment/class-selection.html?'+p.join('&')});
+S('#btn-choose-class').addEventListener('click',function(){var level='';var els=['#overall-cefr','#result-cefr','.level-txt','#w-result-cefr','#o-result-cefr'];for(var i=0;i<els.length;i++){var el=document.querySelector(els[i]);if(el&&el.textContent){var m=el.textContent.match(/(Pre-?A1|A1|A2|B1|B2|C1)/i);if(m){level=m[1].toUpperCase().replace('-','');break}}}if(!level&&typeof writtenResult!=='undefined'&&writtenResult&&writtenResult.cefr)level=writtenResult.cefr;if(!level&&typeof oralResult!=='undefined'&&oralResult&&oralResult.cefr)level=oralResult.cefr;if(!level)level='A1';if(level==='PREA1'||level==='PRE-A1'||level==='Pre-A1'){alert('Your level is Pre-A1. Our current classes start at A1 level. Please contact us at info@sqaeducation.org and we will help you find the right program for you!');return}var name='',email='',phone='';try{var nm=S('#f-name'),em=S('#f-email');if(nm)name=nm.value.trim();if(em)email=em.value.trim();phone=phoneIntlValue()}catch(x){}var p=[];p.push('level='+encodeURIComponent(level));if(name)p.push('name='+encodeURIComponent(name));if(email)p.push('email='+encodeURIComponent(email));if(phone)p.push('phone='+encodeURIComponent(phone));window.location.href='https://sqa-portal-gray.vercel.app/result.html?'+p.join('&')});
 S('#btn-back-home').addEventListener('click',function(){writtenResult=null;oralResult=null;wIdx=0;wSel=null;wAnswers=[];oTranscript=[];oHistory=[];oQCount=0;oProcessing=false;S('#chat-area').innerHTML='';go('scr-welcome')});
 S('#btn-already-home').addEventListener('click',function(){try{localStorage.removeItem('sqa-test-done')}catch(x){}go('scr-welcome')});
 
@@ -864,4 +863,9 @@ try{
 </script>
 
 
+<script>
+(function(){var el=document.getElementById('f-phone-intl');if(el&&window.intlTelInput){window.__iti=window.intlTelInput(el,{initialCountry:"auto",geoIpLookup:function(cb){fetch("https://ipapi.co/json/").then(function(r){return r.json()}).then(function(d){cb((d&&d.country_code)||"ma")}).catch(function(){cb("ma")})},preferredCountries:["ma","dz","us","es","br","fr","eg"],utilsScript:"https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js"});}})();
+function phoneIntlValue(){var el=document.getElementById('f-phone-intl');var v=(el&&el.value||'').trim();if(!v)return'';try{if(window.__iti&&window.__iti.getNumber&&window.__iti.getNumber())return window.__iti.getNumber()}catch(e){}return v}
+function phoneIntlValid(){var el=document.getElementById('f-phone-intl');var v=(el&&el.value||'').trim();if(!v)return false;try{if(window.__iti&&typeof window.__iti.isValidNumber==='function'&&window.intlTelInputUtils&&window.__iti.isValidNumber()===false)return false}catch(e){}return true}
+</script>
 </body></html>
