@@ -794,7 +794,7 @@ async function submitAll(){
   try{
     var pr=await fetch('https://ponilnhyehnzycspksah.supabase.co/functions/v1/submit-test-taker',{
       method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({token:SEC_TOKEN,name:record.name,email:record.email,phone:record.phone,level:record.overallCEFR})
+      body:JSON.stringify({token:SEC_TOKEN,name:record.name,email:record.email,phone:record.phone,level:record.overallCEFR,consent:consent})
     });
     var pd=await pr.json();portalOk=!!(pd&&pd.ok);
   }catch(e){}
