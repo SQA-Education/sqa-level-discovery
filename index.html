@@ -866,6 +866,8 @@ try{
 
 <script>
 (function(){var el=document.getElementById('f-phone-intl');if(el&&window.intlTelInput){window.__iti=window.intlTelInput(el,{initialCountry:"auto",geoIpLookup:function(cb){fetch("https://ipapi.co/json/").then(function(r){return r.json()}).then(function(d){cb((d&&d.country_code)||"ma")}).catch(function(){cb("ma")})},preferredCountries:["ma","dz","us","es","br","fr","eg"],utilsScript:"https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js"});}})();
+/* Prefill name/email/phone/country from URL params (?name=&email=&phone=&country=) so staff can send a ready-to-go link. */
+(function(){try{var p=new URLSearchParams(location.search);var sv=function(id,v){var e=document.getElementById(id);if(e&&v)e.value=v;};sv('f-name',p.get('name'));sv('f-email',p.get('email'));sv('f-country',p.get('country'));var ph=p.get('phone');if(ph){setTimeout(function(){var pe=document.getElementById('f-phone-intl');if(!pe)return;try{if(window.__iti&&window.__iti.setNumber){window.__iti.setNumber(ph);}else{pe.value=ph;}}catch(e){pe.value=ph;}},600);}}catch(e){}})();
 function phoneIntlValue(){var el=document.getElementById('f-phone-intl');var v=(el&&el.value||'').trim();if(!v)return'';try{if(window.__iti&&window.__iti.getNumber&&window.__iti.getNumber())return window.__iti.getNumber()}catch(e){}return v}
 function phoneIntlValid(){var el=document.getElementById('f-phone-intl');var v=(el&&el.value||'').trim();if(!v)return false;try{if(window.__iti&&typeof window.__iti.isValidNumber==='function'&&window.intlTelInputUtils&&window.__iti.isValidNumber()===false)return false}catch(e){}return true}
 </script>
