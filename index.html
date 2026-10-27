@@ -291,7 +291,8 @@ document.addEventListener('selectstart', function(e) {
         <div class="form-group"><label>Full Name <span class="req">*</span></label><input type="text" id="f-name" placeholder="e.g. Maria Rodriguez"></div>
         <div class="form-group"><label>Email Address <span class="req">*</span></label><input type="email" id="f-email" placeholder="e.g. maria@email.com"><span id="err-email" class="field-err hidden">Please enter a valid email address.</span></div>
         <div class="form-group"><label>Phone Number <span class="req">*</span></label>
-          <input type="tel" id="f-phone-intl" placeholder="Phone number" style="width:100%;padding:11px 12px;font-family:var(--font);font-size:.95rem;border:2px solid #e5e5e5;border-radius:var(--radius-sm);background:#f8f9fa;color:var(--text)">
+          <input type="tel" id="f-phone-intl" placeholder="Phone number" style="width:100%;padding:11px 12px 11px 54px;font-family:var(--font);font-size:.95rem;border:2px solid #e5e5e5;border-radius:var(--radius-sm);background:#f8f9fa;color:var(--text)">
+          <style>#f-phone-intl{padding-left:54px !important}.iti{width:100%;display:block}</style>
           <span id="err-phone" class="field-err hidden">Please enter a valid phone number and choose your country.</span>
         </div>
         <div class="form-group"><label>Country of Origin</label><input type="text" id="f-country" placeholder="e.g. Brazil"></div>
